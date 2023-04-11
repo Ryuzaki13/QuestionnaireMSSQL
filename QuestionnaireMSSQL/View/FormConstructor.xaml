@@ -1,0 +1,63 @@
+﻿<Page x:Class="QuestionnaireMSSQL.View.FormConstructor"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:QuestionnaireMSSQL.View"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="FormConstructor">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <ListView ItemsSource="{Binding Questions}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <Run Text="{Binding Text}"></Run>
+                            <LineBreak></LineBreak>
+                            <Run FontStyle="Italic" Foreground="Gray" Text="{Binding QuestionType.Description}"></Run>
+                        </TextBlock>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+        <Grid Grid.Column="1"></Grid>
+        <Grid Grid.Column="2">
+            <StackPanel>
+                <Label>Текст вопроса</Label>
+                <TextBox Name="tbQuestionText"></TextBox>
+                <Label>Тип вопроса</Label>
+                <ListBox Name="lbQuestionType" DisplayMemberPath="Description"
+                         SelectedItem="{Binding SelectedQuestionType}"
+                         SelectionChanged="changeQuestionType"></ListBox>
+                <StackPanel Name="spQuestionVariants" IsEnabled="False">
+                    <Label>Варианты ответа</Label>
+                    <ListView Height="100"
+                              Name="lvVariants"
+                              ItemsSource="{Binding Variants}"></ListView>
+                    <Label>Текст варианта</Label>
+                    <TextBox Name="tbVariantText"></TextBox>
+                    <Grid Margin="0 10 0 0" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Margin="0 0 5 0" Click="addVariant">Добавить</Button>
+                        <Button Grid.Column="1" Margin="5 0 0 0" Click="delVariant">Удалить</Button>
+                    </Grid>
+                </StackPanel>
+                <Button Click="addQuestion" Margin="0 10 0 0">Добавить вопрос</Button>
+                <Label>Название анкеты</Label>
+                <TextBox Name="tbQuestionnaireName"></TextBox>
+                <Button Click="saveQuestionnaire" Margin="0 10 0 0">Сохранить анкету</Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
