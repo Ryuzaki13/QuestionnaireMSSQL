@@ -20,7 +20,13 @@ namespace QuestionnaireMSSQL.View {
 		private QuestionnaireConnection connection;
 
 		private bool lastSelectedTypeHaveVariants = false;
-		public ObservableCollection<Question> Questions { get; set; } = new ObservableCollection<Question>();
+
+		public ObservableCollection<Form> Forms { get; set; }
+		public Form SelectedForm { get; set; }
+
+		public ObservableCollection<Question> Questions { get; set; }
+		public Question SelectedQuestion { get; set; }
+
 		public ObservableCollection<string> Variants { get; set; } = new ObservableCollection<string>();
 		public QuestionType SelectedQuestionType { get; set; }
 
@@ -28,11 +34,42 @@ namespace QuestionnaireMSSQL.View {
 			InitializeComponent();
 			this.connection = connection;
 
-			lbQuestionType.SetBinding(ItemsControl.ItemsSourceProperty, new Binding() {
+			Forms = new ObservableCollection<Form>(connection.Forms.ToList());
+
+			lvForms.SetBinding(ItemsControl.ItemsSourceProperty, new Binding() { Source = Forms });
+			lvQuestionType.SetBinding(ItemsControl.ItemsSourceProperty, new Binding() {
 				Source = connection.QuestionTypes.ToList(),
 			});
 
 			DataContext = this;
+		}
+
+		private void applyQuestionFilter() {
+			var view = CollectionViewSource.GetDefaultView(lvQuestions.ItemsSource);
+			if (view == null) { return; }
+
+			if (SelectedForm == null) {
+				view.Filter = element => { return false; };
+				return;
+			}
+
+			view.Filter = element => {
+				Question question = element as Question;
+				if (question == null) {
+					return false;
+				}
+
+				return question.Form == SelectedForm.ID;
+			};
+		}
+
+		private void changeForm(object sender, SelectionChangedEventArgs e) {
+			if (Questions == null) {
+				Questions= new ObservableCollection<Question>(connection.Questions.ToList());
+				lvQuestions.SetBinding(ItemsControl.ItemsSourceProperty, new Binding() { Source = Questions });
+			}
+			applyQuestionFilter();
+			spQuestion.IsEnabled = SelectedForm != null;
 		}
 
 		private void changeQuestionType(object sender, SelectionChangedEventArgs e) {
@@ -90,6 +127,11 @@ namespace QuestionnaireMSSQL.View {
 				return;
 			}
 
+			if (SelectedForm == null) {
+				MessageBox.Show("Необходимо выбрать анкету");
+				return;
+			}
+
 			Question question = new Question();
 
 			if (isHaveVariants()) {
@@ -102,11 +144,21 @@ namespace QuestionnaireMSSQL.View {
 
 			question.Text = questionText;
 			question.QuestionType = SelectedQuestionType;
+			question.Form = SelectedForm.ID;
+			question.Form1 = SelectedForm;
 
+			connection.Questions.Add(question);
+			connection.SaveChanges();
 			Questions.Add(question);
+
+			Variants.Clear();
+
+			tbVariantText.Clear();
+			tbQuestionText.Clear();
+			lvQuestionType.SelectedIndex = -1;
 		}
 
-		private void saveQuestionnaire(object sender, RoutedEventArgs e) {
+		private void createQuestionnaire(object sender, RoutedEventArgs e) {
 			string formName = tbQuestionnaireName.Text.Trim();
 			if (formName.Length == 0) {
 				MessageBox.Show("Название анкеты не введено");
@@ -119,18 +171,11 @@ namespace QuestionnaireMSSQL.View {
 			connection.Forms.Add(form);
 			connection.SaveChanges();
 
-			foreach (var question in Questions) {
-				question.Form = form.ID;
-				connection.Questions.Add(question);
-			}
-			connection.SaveChanges();
+			Forms.Add(form);
 
-			Variants.Clear();
-			Questions.Clear();
+			lvForms.SelectedItem = form;
+
 			tbQuestionnaireName.Clear();
-			tbVariantText.Clear();
-			tbQuestionText.Clear();
-			lbQuestionType.SelectedIndex = -1;
 		}
 	}
 }
